@@ -1,0 +1,2 @@
+This repository contains exercises developed for the Distributed Systems course at UTFPR – Campus Curitiba (UTFPR-CT).
+The goal is to implement key concepts such as communication protocols, synchronization, consistency models, distributed algorithms, and fault tolerance using practical examples.

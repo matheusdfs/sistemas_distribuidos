@@ -1,10 +1,15 @@
+import ast
 import pika
 import time
 import random
 
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes
+
 class ms_pagamento():
-    def __init__(self):
-        pass
+    def __init__(self, public_key, private_key):
+        self.public_key = public_key
+        self.private_key = private_key
 
     def execute(self):
         self.connection = pika.BlockingConnection(
@@ -19,14 +24,27 @@ class ms_pagamento():
 
         def callback(ch, method, properties, body):
             """Função para validar pagamentos, 70% de chance de sucesso e 30% de falha"""
+            assinatura = self.private_key.sign(
+                body,
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH
+                ),
+                hashes.SHA256()
+            )
+            data = dict()
+            data["body"] = body
+            data["assinatura"] = assinatura
+
             time.sleep(3)
+            
             if random.random() > 0.3:
-                print(f"Pagamento aprovado para compra: {body}")
+                print(f"[DEBUG] Pagamento aprovado para compra")
                 # self.channel.basic_publish(exchange='', routing_key='pagamento-aprovado', body=body)
-                self.channel.basic_publish(exchange='pagamento-aprovado', routing_key='', body=body)
+                self.channel.basic_publish(exchange='pagamento-aprovado', routing_key='', body=str(data))
             else:
-                print(f"Pagamento recusado para compra: {body}")
-                self.channel.basic_publish(exchange='', routing_key='pagamento-recusado', body=body)
+                print(f"[DEBUG] Pagamento recusado para compra")
+                self.channel.basic_publish(exchange='', routing_key='pagamento-recusado', body=str(data))
 
         self.channel.basic_consume(queue='reserva-criada', on_message_callback=callback, auto_ack=True)
         self.channel.start_consuming()

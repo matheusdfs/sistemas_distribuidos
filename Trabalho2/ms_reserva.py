@@ -1,10 +1,14 @@
 import pika
 import ast
 
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+
 reservas = []
 
 class ms_reserva:
-    def __init__(self):
+    def __init__(self, public_key):
+        self.public_key = public_key
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(host='localhost'))
         self.channel = self.connection.channel()
@@ -13,7 +17,6 @@ class ms_reserva:
 
     def menu(self):
         while True:
-            print(reservas)
             print("Bem-vindo ao sistema de reservas de passagens!")
             print("Escolha uma das opções abaixo:")
             print("1. Consultar itinerários disponíveis")
@@ -98,6 +101,18 @@ class ms_reserva:
         def callback_aprovado(ch, method, properties, body):
             data = ast.literal_eval(body.decode('utf-8'))
 
+            self.public_key.verify(
+                data["assinatura"],
+                data["body"],
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH
+                ),
+                hashes.SHA256()
+            )
+
+            data = ast.literal_eval(data["body"].decode('utf-8'))
+
             resultado = [item for item in reservas if item["codigo"] == f"{data['user']}_{data['codigo']}"]
             
             reservas.remove(resultado[0])
@@ -108,6 +123,18 @@ class ms_reserva:
         def callback_gerado(ch, method, properties, body):
             data = ast.literal_eval(body.decode('utf-8'))
 
+            self.public_key.verify(
+                data["assinatura"],
+                data["body"],
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH
+                ),
+                hashes.SHA256()
+            )
+
+            data = ast.literal_eval(data["body"].decode('utf-8'))
+
             resultado = [item for item in reservas if item["codigo"] == f"{data['user']}_{data['codigo']}"]
             
             reservas.remove(resultado[0])
@@ -117,11 +144,21 @@ class ms_reserva:
         def callback_recusado(ch, method, properties, body):
             data = ast.literal_eval(body.decode('utf-8'))
 
+            self.public_key.verify(
+                data["assinatura"],
+                data["body"],
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH
+                ),
+                hashes.SHA256()
+            )
+
+            data = ast.literal_eval(data["body"].decode('utf-8'))
+
             resultado = [item for item in reservas if item["codigo"] == f"{data['user']}_{data['codigo']}"]
             
             reservas.remove(resultado[0])
-
-            reservas.append({"codigo":f"{data["user"]}_{data["codigo"]}", "status": "recusado"})
 
         channel.basic_consume(queue='bilhete-gerado', on_message_callback=callback_gerado, auto_ack=True)
         channel.basic_consume(queue='pagamento-recusado', on_message_callback=callback_recusado, auto_ack=True)
@@ -136,6 +173,8 @@ class ms_reserva:
         
         resultado = next((item for item in reservas if item["codigo"] == codigo), None)
         print(resultado)
+
+        print("\n\n")
 
     def get_itinerarios(self):
         """Função para simular uma chamada no banco de dados"""

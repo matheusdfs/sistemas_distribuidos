@@ -1,9 +1,13 @@
+import ast
 import time
 import pika
 
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+
 class ms_bilhete:
-    def __init__(self):
-        pass
+    def __init__(self, public_key):
+        self.public_key = public_key
 
     def execute(self):
         self.connection = pika.BlockingConnection(
@@ -19,8 +23,20 @@ class ms_bilhete:
         self.channel.queue_bind(exchange='pagamento-aprovado', queue=self.queue_pagamento_aprovado)
 
         def callback(ch, method, properties, body):
+            data = ast.literal_eval(body.decode('utf-8'))
+
+            self.public_key.verify(
+                data["assinatura"],
+                data["body"],
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH
+                ),
+                hashes.SHA256()
+            )
+
             time.sleep(3)
-            print(f"Bilhete gerado para compra: {body}")
+            print(f"[DEBUG] Bilhete gerado para compra")
             self.channel.basic_publish(exchange='', routing_key='bilhete-gerado', body=body)
 
         self.channel.basic_consume(queue=self.queue_pagamento_aprovado, on_message_callback=callback, auto_ack=True)
