@@ -8,7 +8,6 @@ class ms_email:
         }
 
     def execute(self):
-        print("dale")
         connection = pika.BlockingConnection(
             pika.ConnectionParameters(host='localhost'))
         channel = connection.channel()
@@ -18,23 +17,20 @@ class ms_email:
         queue_name_santos = result.method.queue
         channel.queue_bind(exchange='viagem-santos', queue=queue_name_santos)
 
-        # Declare 'viagem-rio-janeiro'
         result = channel.queue_declare(queue='', exclusive=True)
-        queue_name_rj = result.method.queue
-        channel.queue_bind(exchange='viagem-rio-janeiro', queue=queue_name_rj)
+        queue_name_rio = result.method.queue
+        channel.queue_bind(exchange='viagem-rio', queue=queue_name_rio)
 
         def callback_santos(ch, method, properties, body):
-            print("here")
             for assinante in self.assinantes["Santos"]:
                 with open(f'Santos_{assinante}.txt', 'a') as file:
                     file.write(body.decode('utf-8') + '\n')
 
-        def callback_rj(ch, method, properties, body):
-            print("here")
-            for assinante in self.assinantes["Santos"]:
-                with open(f'Santos_{assinante}.txt', 'a') as file:
+        def callback_rio(ch, method, properties, body):
+            for assinante in self.assinantes["Rio de Janeiro"]:
+                with open(f'Rio_{assinante}.txt', 'a') as file:
                     file.write(body.decode('utf-8') + '\n')
 
         channel.basic_consume(queue=queue_name_santos, on_message_callback=callback_santos, auto_ack=True)
-        channel.basic_consume(queue=queue_name_rj, on_message_callback=callback_rj, auto_ack=True)
+        channel.basic_consume(queue=queue_name_rio, on_message_callback=callback_rio, auto_ack=True)
         channel.start_consuming()
