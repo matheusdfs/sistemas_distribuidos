@@ -13,15 +13,17 @@ class ms_pagamento():
         self.channel = self.connection.channel()
 
         self.channel.queue_declare(queue='reserva-criada')
-        self.channel.queue_declare(queue='pagamento-aprovado')
         self.channel.queue_declare(queue='pagamento-recusado')
+        # self.channel.queue_declare(queue='pagamento-aprovado')
+        self.channel.exchange_declare(exchange='pagamento-aprovado', exchange_type='fanout')
 
         def callback(ch, method, properties, body):
             """Função para validar pagamentos, 70% de chance de sucesso e 30% de falha"""
-            time.sleep(2)
+            time.sleep(3)
             if random.random() > 0.3:
                 print(f"Pagamento aprovado para compra: {body}")
-                self.channel.basic_publish(exchange='', routing_key='pagamento-aprovado', body=body)
+                # self.channel.basic_publish(exchange='', routing_key='pagamento-aprovado', body=body)
+                self.channel.basic_publish(exchange='pagamento-aprovado', routing_key='', body=body)
             else:
                 print(f"Pagamento recusado para compra: {body}")
                 self.channel.basic_publish(exchange='', routing_key='pagamento-recusado', body=body)

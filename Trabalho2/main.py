@@ -1,4 +1,4 @@
-import pika
+import threading
 import multiprocessing
 
 multiprocessing.set_start_method('fork')
@@ -13,7 +13,6 @@ def run_worker(worker_instance):
 
 if __name__ == "__main__":
     # Criar instâncias dos sistemas
-    sistema_reserva = ms_reserva()
     sistema_bilhete = ms_bilhete()
     sistema_pagamento = ms_pagamento()
 
@@ -26,7 +25,12 @@ if __name__ == "__main__":
     processo_bilhete.start()
 
     # Executar a reserva no processo principal
-    sistema_reserva.execute()
+    sistema_reserva = ms_reserva()
+
+    processo_reserva = threading.Thread(target=run_worker, args=(sistema_reserva,))
+    processo_reserva.start()
+
+    sistema_reserva.menu()
 
     # Aguardar a conclusão do processo de pagamento
     processo_pagamento.join()
