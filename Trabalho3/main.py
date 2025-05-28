@@ -7,7 +7,6 @@ import Pyro5.api
 import Pyro5.nameserver
 from peer import Peer
 from tracker import Tracker
-from file_transfer import FileTransferService
 from menu import exibir_menu
 
 Pyro5.api.config.SERIALIZER = "serpent"  # serpent is default, but best to be explicit
@@ -18,6 +17,9 @@ def start_nameserver():
     Pyro5.nameserver.start_ns_loop()
 
 def start_peer(name, is_tracker=False):
+    if is_tracker:
+        time.sleep(1)  # Give tracker some time to start first
+
     files_dir = f"./files/{name}"
     Path(files_dir).mkdir(parents=True, exist_ok=True)
     initial_files = os.listdir(files_dir)
@@ -27,16 +29,12 @@ def start_peer(name, is_tracker=False):
         peer = Tracker(name, initial_files)
     else:
         peer = Peer(name, initial_files)
-    
-    file_service = FileTransferService(files_dir)
 
     with Pyro5.api.Daemon() as daemon:
         ns = Pyro5.api.locate_ns()
         peer_uri = daemon.register(peer)
-        file_uri = daemon.register(file_service)
 
         ns.register(name, peer_uri)
-        ns.register(name + "_file", file_uri)
 
         if is_tracker:
             ns.register("Tracker_Atual", peer_uri)

@@ -38,16 +38,12 @@ def exibir_menu(peer_name, peer_uri, ns):
                 print("Arquivo não encontrado.")
                 continue
             destino = donos[0]
-            peer_remoto = Pyro5.api.Proxy(ns.lookup(destino + "_file"))
+            peer_remoto = Pyro5.api.Proxy(ns.lookup(destino))
             conteudo = peer_remoto.get_file(nome)
-            import base64
-            conteudo_bytes = base64.b64decode(conteudo["data"].encode("utf-8"))
-            print(conteudo_bytes)
+            conteudo_bytes = conteudo["data"].encode("utf-8")
             if conteudo_bytes:
-                peer_file = Pyro5.api.Proxy(ns.lookup(peer_name + "_file"))
+                peer_file = Pyro5.api.Proxy(ns.lookup(peer_name))
                 # Pass only the bytes to save_file, not the whole dict
-                print(type(conteudo_bytes))
-                print(type(nome))
                 peer_file.save_file(nome, conteudo_bytes)
                 peer.add_file(nome)
             else:

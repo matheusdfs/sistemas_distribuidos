@@ -1,8 +1,10 @@
 # peer.py
+import random
 import Pyro5.api
 import threading
-import os
-import random
+import base64
+
+from Pyro5.serializers import serpent
 
 @Pyro5.api.expose
 class Peer:
@@ -41,7 +43,6 @@ class Peer:
             print(f"[{self.name}] Falha ao notificar tracker.")
 
     def receive_heartbeat(self):
-        print(f"[{self.name}] Heartbeat recebido.")
         self.reset_timer()
 
     def reset_timer(self):
@@ -64,4 +65,18 @@ class Peer:
             print(f"[{self.name}] Arquivos registrados no tracker.")
         except Exception as e:
             print(f"[{self.name}] Erro ao registrar arquivos: {e}")
+
+    def get_file(self, filename):
+        try:
+            with open(f"./files/{self.name}/{filename}", "rb") as f:
+                return f.read()
+        except FileNotFoundError:
+            return None
+
+    def save_file(self, filename, content):
+        content = serpent.tobytes(content)
+        with open(f"./files/{self.name}/{filename}", "wb") as f:
+            f.write(base64.b64decode(content))
+        print(f"[{self.name}] Arquivo '{filename}' salvo.")
+
 
