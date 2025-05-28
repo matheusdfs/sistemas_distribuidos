@@ -1,12 +1,16 @@
 # tracker.py
-from peer import Peer
 import Pyro5.api
+
+from peer import Peer
+from heartbeat import HeartbeatManager
 
 @Pyro5.api.expose
 class Tracker(Peer):
     def __init__(self, name, files, epoch=0):
         super().__init__(name, files, epoch)
         self.index = {}  # {filename: set(peer_names)}
+        self.heartbeat = HeartbeatManager(self.tracker_uri)
+        self.heartbeat.start()
 
     def register_files(self, peer_name, file_list):
         for file in file_list:

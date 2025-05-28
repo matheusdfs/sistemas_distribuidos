@@ -45,6 +45,9 @@ def exibir_menu(peer_name, peer_uri, ns):
             print(conteudo_bytes)
             if conteudo_bytes:
                 peer_file = Pyro5.api.Proxy(ns.lookup(peer_name + "_file"))
+                # Pass only the bytes to save_file, not the whole dict
+                print(type(conteudo_bytes))
+                print(type(nome))
                 peer_file.save_file(nome, conteudo_bytes)
                 peer.add_file(nome)
             else:

@@ -2,6 +2,7 @@
 import Pyro5.api
 import threading
 import os
+import random
 
 @Pyro5.api.expose
 class Peer:
@@ -47,7 +48,7 @@ class Peer:
         if self.heartbeat_timer:
             self.heartbeat_timer.cancel()
         self.heartbeat_timer = threading.Timer(
-            timeout := (0.15 + 0.15 * os.urandom(1)[0] / 255),
+            timeout := (0.15 + (0.15 * random.random()) % 0.15),
             self.tracker_failed
         )
         self.heartbeat_timer.start()

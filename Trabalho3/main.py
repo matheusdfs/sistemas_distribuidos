@@ -10,6 +10,8 @@ from tracker import Tracker
 from file_transfer import FileTransferService
 from menu import exibir_menu
 
+Pyro5.api.config.SERIALIZER = "serpent"  # serpent is default, but best to be explicit
+
 PEERS = ["peer1", "peer2", "peer3", "peer4", "peer5"]
 
 def start_nameserver():

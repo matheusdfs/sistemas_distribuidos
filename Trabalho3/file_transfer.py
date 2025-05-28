@@ -1,5 +1,7 @@
 # file_transfer.py
 import Pyro5.api
+# from Pyro5.serializers import serpent
+import base64
 
 @Pyro5.api.expose
 class FileTransferService:
@@ -14,6 +16,7 @@ class FileTransferService:
             return None
 
     def save_file(self, filename, content):
+        content = base64.b64decode(content)
         with open(f"{self.files_dir}/{filename}", "wb") as f:
             f.write(content)
         print(f"[Transferência] Arquivo '{filename}' salvo.")
