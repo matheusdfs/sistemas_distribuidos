@@ -27,9 +27,9 @@ class Peer:
         self.ultimo_voto = -1
         self.is_electing = is_electing
 
-        daemon =  Pyro5.api.Daemon()
+        self.daemon =  Pyro5.api.Daemon()
         ns = Pyro5.api.locate_ns()
-        self.uri = daemon.register(self)
+        self.uri = self.daemon.register(self)
 
         if is_tracker:
             print("registrado tracker atual")
@@ -49,7 +49,8 @@ class Peer:
                     time.sleep(0.5)
 
         print(f"[{name}] Pronto.")
-        daemon.requestLoop()
+        if not is_tracker:
+            self.daemon.requestLoop()
 
     def list_files(self):
         return list(self.files)
