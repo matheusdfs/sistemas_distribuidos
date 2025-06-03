@@ -49,6 +49,7 @@ def exibir_menu(peer_name, peer_uri, ns):
             else:
                 print("Erro ao baixar o arquivo.")
         elif opcao == "6":
+            print("Saindo do menu.")
             break
         else:
             print("Opção inválida.")

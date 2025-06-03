@@ -30,7 +30,7 @@ class ElectionManager:
     def request_vote(self, uri):
         try:
             peer = Pyro5.api.Proxy(uri)
-            response = peer.vote_candidate(self.peer.name, self.epoch)
+            response = peer.vote_candidate(self.epoch)
             if response:
                 with self.lock:
                     self.votes += 1

@@ -6,8 +6,8 @@ from heartbeat import HeartbeatManager
 
 @Pyro5.api.expose
 class Tracker(Peer):
-    def __init__(self, name, files, epoch=0):
-        super().__init__(name, files, epoch)
+    def __init__(self, name, is_electing, epoch=0):
+        super().__init__(name, is_electing, epoch, is_tracker=True)
         self.index = {}  # {filename: set(peer_names)}
         self.heartbeat = HeartbeatManager(self.tracker_uri)
         self.heartbeat.start()
