@@ -26,9 +26,9 @@ class HeartbeatManager:
 
     def send_heartbeat_loop(self):
         while self.running:
-            if random.random() < 0.01:
-                print("[Heartbeat] Parando batimento cardíaco...")
-                self.running = False
+            #if random.random() < 0.01:
+            #    print("[Heartbeat] Parando batimento cardíaco...")
+            #    self.running = False
             for uri in self.peers_uris:
                 try:
                     peer = Pyro5.api.Proxy(uri)

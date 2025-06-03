@@ -16,26 +16,6 @@ class Peer:
         Path(files_dir).mkdir(parents=True, exist_ok=True)
         files = os.listdir(files_dir)
 
-        daemon =  Pyro5.api.Daemon()
-        ns = Pyro5.api.locate_ns()
-        self.uri = daemon.register(self)
-
-        if is_tracker:
-            ns.register(f"Tracker", self.uri)
-        else:
-            ns.register(name, self.uri)
-
-        # Aguarda tracker aparecer
-        if not is_tracker:
-            while True:
-                try:
-                    print(f"[{name}] Buscando Tracker_Epoca_{epoch}")
-                    self.tracker_uri = ns.lookup(f"Tracker")
-                    self.register_with_tracker()
-                    break
-                except:
-                    time.sleep(0.5)
-
         self.name = name
         self.files = set(files)
         self.epoch = epoch
@@ -46,6 +26,27 @@ class Peer:
         self.epoch = epoch
         self.ultimo_voto = -1
         self.is_electing = is_electing
+
+        daemon =  Pyro5.api.Daemon()
+        ns = Pyro5.api.locate_ns()
+        self.uri = daemon.register(self)
+
+        if is_tracker:
+            print("registrado tracker atual")
+            ns.register(f"Tracker_Atual", self.uri)
+        else:
+            ns.register(name, self.uri)
+
+        # Aguarda tracker aparecer
+        if not is_tracker:
+            while True:
+                try:
+                    print(f"[{name}] Buscando Tracker_Atual")
+                    self.tracker_uri = ns.lookup(f"Tracker_Atual")
+                    self.register_with_tracker()
+                    break
+                except:
+                    time.sleep(0.5)
 
         print(f"[{name}] Pronto.")
         daemon.requestLoop()
@@ -146,13 +147,13 @@ class Peer:
 
         if sucesso:
             self.epoch += 1
-            ns.register(f"Tracker_Epoca_{self.epoch}", self.uri)
-            print(f"[{self.name}] Novo tracker registrado como Tracker_Epoca_{self.epoch}.")
+            ns.register(f"Tracker_Atual", self.uri)
+            print(f"[{self.name}] Novo tracker registrado como Tracker_Atual.")
             # Notificar os outros peers
             for uri in peer_uris:
                 try:
                     p = Pyro5.api.Proxy(uri)
-                    p.atualizar_tracker(ns.lookup(f"Tracker_Epoca_{self.epoch}"))
+                    p.atualizar_tracker(ns.lookup(f"Tracker_Atual"))
                 except:
                     continue
 
