@@ -1,11 +1,10 @@
 import threading
 import multiprocessing
 
-# multiprocessing.set_start_method('fork')
-
 from ms_bilhete import ms_bilhete
 from ms_reserva import ms_reserva
 from ms_pagamento import ms_pagamento
+from ms_itinerarios import ms_itinerarios
 
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import serialization, hashes
@@ -33,10 +32,6 @@ private_key_pem = private_key.private_bytes(
     encryption_algorithm=serialization.NoEncryption()  # ou use senha se quiser
 )
 
-# Função para rodar os workers
-def run_worker(worker_instance):
-    worker_instance.execute()
-
 # Worker functions criam as instâncias dentro dos subprocessos
 def run_bilhete(public_key_pem):
     sistema = ms_bilhete(public_key_pem)
@@ -46,9 +41,12 @@ def run_pagamento(public_key_pem, private_key_pem):
     sistema = ms_pagamento(public_key_pem, private_key_pem)
     sistema.execute()
 
-sistema_reserva = ms_reserva(public_key_pem)
+def run_itinerarios():
+    sistema = ms_itinerarios()
+    sistema.execute()
 
 def run_reserva():
+    sistema_reserva = ms_reserva(public_key_pem)
     sistema_reserva.execute()
 
 
@@ -59,6 +57,10 @@ if __name__ == "__main__":
 
     # Criar e iniciar o processo para o sistema de bilhete
     processo_bilhete = multiprocessing.Process(target=run_bilhete, args=(public_key_pem,))
+    processo_bilhete.start()
+    
+    # Criar e iniciar o processo para o sistema de itinerarios
+    processo_bilhete = multiprocessing.Process(target=run_itinerarios, args=())
     processo_bilhete.start()
 
     # Criar e iniciar o processo para o sistema de reserva

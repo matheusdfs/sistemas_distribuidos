@@ -2,10 +2,8 @@ import ast
 import time
 import pika
 
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
-
-from cryptography.hazmat.primitives import serialization
 
 class ms_bilhete:
     def __init__(self, public_key_pem):
@@ -27,15 +25,15 @@ class ms_bilhete:
         def callback(ch, method, properties, body):
             data = ast.literal_eval(body.decode('utf-8'))
 
-            self.public_key.verify(
-                data["assinatura"],
-                data["body"],
-                padding.PSS(
-                    mgf=padding.MGF1(hashes.SHA256()),
-                    salt_length=padding.PSS.MAX_LENGTH
-                ),
-                hashes.SHA256()
-            )
+            #self.public_key.verify(
+            #    data["assinatura"],
+            #    data["body"],
+            #    padding.PSS(
+            #        mgf=padding.MGF1(hashes.SHA256()),
+            #        salt_length=padding.PSS.MAX_LENGTH
+            #    ),
+            #    hashes.SHA256()
+            #)
 
             time.sleep(3)
             print(f"[DEBUG] Bilhete gerado para compra")

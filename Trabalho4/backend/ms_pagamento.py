@@ -2,12 +2,12 @@ import ast
 import pika
 import time
 import random
+import uvicorn
+import threading
 
+from fastapi import FastAPI
 from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives import hashes
-
-from cryptography.hazmat.primitives import serialization
-
+from cryptography.hazmat.primitives import hashes, serialization
 
 class ms_pagamento():
     def __init__(self, public_key_pem, private_key_pem):
@@ -16,6 +16,26 @@ class ms_pagamento():
             private_key_pem,
             password=None  # ou passe a senha se estiver criptografada
         )
+
+        self._start_api()
+    
+    def _start_api(self):
+        app = FastAPI()
+
+        # Declaration of the endpoints
+        @app.get("/criar_pagamento")
+        def criar_pagamento():
+            random_id = random.randint(100000, 999999)
+            link_pagamento = f"https://dinizpaymentplataform.com/pay/{random_id}"
+            return {"link_pagamento": link_pagamento}
+
+        # Run in thread so the code is not blocked
+        self.thread = threading.Thread(target=uvicorn.run, args=(app,), kwargs={
+            "host": "127.0.0.1",
+            "port": 8002,
+            "log_level": "info"
+        }, daemon=True)
+        self.thread.start()
 
     def execute(self):
         self.connection = pika.BlockingConnection(
