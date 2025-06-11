@@ -2,13 +2,63 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Reserva de Passagem</title>
+  <style>
+    h1 {
+      text-align: center;
+    }
+  </style> 
 </head>
 <body>
-  <h1>Reserva de Passagem</h1>
+  <h1>Diniz Viagens</h1>
+
+  <h2>Itinerários</h2>
+  <button id="btnUpdateItinerarios">Atualizar Itinerários</button>
+  <table id="itinerarios" border="1" style="width:100%; margin-top: 16px;">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Origem</th>
+        <th>Destino</th>
+        <th>Data</th>
+        <th>Data</th>
+        <th>Noites</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Linhas dos itinerários serão inseridas aqui via JavaScript -->
+      <script>
+        const response = window.response || [];
+        const tbody = document.currentScript.parentElement;
+        response.forEach(it => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+        <td>${it.id}</td>
+        <td>${it.origem}</td>
+        <td>${it.destino}</td>
+        <td>${it.data}</td>
+        <td>${it.horario}</td>
+        <td>${it.vagas}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      </script>
+    </tbody>
+  </table>
+
+  <div style="margin-top: 20px;"></div>
+
+  <h2>Reservar Passagem</h2>
+  <label for="codigoItinerario">Codigo do Itinerário:</label>
+  <input type="text" id="codigoItinerario" placeholder="Digite o codigo do itinerário" />
   <button id="btnReservar">Reservar</button>
+
+  <h2>Cancelar Reserva</h2>
+  <label for="codigoReserva">Codigo da Reserva:</label>
+  <input type="text" id="codigoReserva" placeholder="Digite o codigo da reserva" />
+  <button id="btnCancelar">Cancelar</button>
+  
   <pre id="resultado"></pre>
 
-  <script type="module" src="script.js"></script>
+  <script type="module" src="dist/script.js"></script>
 </body>
 </html>

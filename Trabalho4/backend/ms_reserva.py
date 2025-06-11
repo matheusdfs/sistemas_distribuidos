@@ -1,15 +1,18 @@
 import ast
 import pika
-import json
+import asyncio
 import uvicorn
 import requests
 import threading
 
+
 from fastapi import FastAPI
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding
+from sse_starlette.sse import EventSourceResponse
+from fastapi.middleware.cors import CORSMiddleware
+from cryptography.hazmat.primitives import serialization
 
 reservas = []
+subscribers = []
 
 class ms_reserva:
     def __init__(self, public_key_pem):
@@ -28,6 +31,14 @@ class ms_reserva:
 
     def _start_api(self):
         app = FastAPI()
+
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
         # Declaration of the endpoints
         @app.get("/get_itinerarios")
