@@ -63,8 +63,12 @@ class ms_itinerarios:
                     break
 
         def callback_cancelada(ch, method, properties, body):
+            print("Reserva cancelada")
             data = ast.literal_eval(body.decode())
             codigo = data["codigo"]
+
+            # Remove the user prefix
+            codigo = codigo.replace("diniz_", "")
             for itinerario in self.itinerarios:
                 if itinerario["codigo"] == codigo and itinerario["cabines_disponíveis"] > 0:
                     itinerario["cabines_disponíveis"] += 1

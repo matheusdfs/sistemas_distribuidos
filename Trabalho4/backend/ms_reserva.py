@@ -106,6 +106,13 @@ class ms_reserva:
         
         if not resultado:
             return {"error": "RESERVA_NOT_FOUND"}
+        
+        body = {
+            "user": "diniz",
+            "codigo": codigo_reserva,
+        }
+        
+        self.channel.basic_publish(exchange='', routing_key='reserva-cancelada', body=str(body))
 
         self.reservas.remove(resultado[0])
         return {"message": "RESERVA_CANCELADA"}
@@ -148,7 +155,10 @@ class ms_reserva:
 
             resultado = [item for item in self.reservas if item["codigo"] == f"{data['user']}_{data['codigo']}"]
             
-            self.reservas.remove(resultado[0])
+            try:
+                self.reservas.remove(resultado[0])
+            except IndexError:
+                print("Reserva não encontrada para remoção. (Aprovado)")
 
             temp = data["user"]
             temp_2 = data["codigo"]
@@ -174,7 +184,10 @@ class ms_reserva:
 
             resultado = [item for item in self.reservas if item["codigo"] == f"{data['user']}_{data['codigo']}"]
             
-            self.reservas.remove(resultado[0])
+            try:
+                self.reservas.remove(resultado[0])
+            except IndexError:
+                print("Reserva não encontrada para remoção. (Gerado)")
 
             temp = data["user"]
             temp_2 = data["codigo"]
@@ -199,7 +212,10 @@ class ms_reserva:
 
             resultado = [item for item in self.reservas if item["codigo"] == f"{data['user']}_{data['codigo']}"]
             
-            self.reservas.remove(resultado[0])
+            try:
+                self.reservas.remove(resultado[0])
+            except IndexError:
+                print("Reserva não encontrada para remoção. (Recusado)")
 
         channel.basic_consume(queue='bilhete-gerado', on_message_callback=callback_gerado, auto_ack=True)
         channel.basic_consume(queue='pagamento-recusado', on_message_callback=callback_recusado, auto_ack=True)
