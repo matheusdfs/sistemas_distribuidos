@@ -1,0 +1,2 @@
+npx tsc
+npx serve .

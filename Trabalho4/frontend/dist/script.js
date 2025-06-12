@@ -25,7 +25,7 @@ btnGetItinerarios.addEventListener('click', async () => {
           <td>${item.porto_embarque}</td>
           <td>${item.porto_desembarque}</td>
           <td>${item.data}</td>
-          <td>${item.numero_noites}</td>
+          <td>${item.cabines_disponíveis}</td>
         </tr>
       `).join('')}
     `;
@@ -49,8 +49,8 @@ btn.addEventListener('click', async () => {
 });
 btnCancelar.addEventListener('click', async () => {
     try {
-        const codigoItinerario = document.getElementById('codigoItinerario').value;
-        const res = await fetch(`http://127.0.0.1:8000/cancelar_reserva?codigo_reserva=${encodeURIComponent(codigoItinerario)}`);
+        const codigoReserva = document.getElementById('codigoReserva').value;
+        const res = await fetch(`http://127.0.0.1:8000/cancelar_reserva?codigo_reserva=${encodeURIComponent(codigoReserva)}`);
         if (!res.ok)
             throw new Error(`Erro ${res.status}`);
         const data = await res.json();

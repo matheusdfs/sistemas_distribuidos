@@ -1,17 +1,15 @@
 import threading
 import multiprocessing
 
+from pagamento import pagamento
 from ms_bilhete import ms_bilhete
 from ms_reserva import ms_reserva
 from ms_pagamento import ms_pagamento
+from ms_marketing import ms_marketing
 from ms_itinerarios import ms_itinerarios
 
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import serialization, hashes
-
-from fastapi import FastAPI
-import uvicorn
-from ms_reserva import ms_reserva
 
 # Gerar par de chaves
 private_key = rsa.generate_private_key(
@@ -32,6 +30,8 @@ private_key_pem = private_key.private_bytes(
     encryption_algorithm=serialization.NoEncryption()  # ou use senha se quiser
 )
 
+sistema_reserva = None
+
 # Worker functions criam as instâncias dentro dos subprocessos
 def run_bilhete(public_key_pem):
     sistema = ms_bilhete(public_key_pem)
@@ -49,6 +49,13 @@ def run_reserva():
     sistema_reserva = ms_reserva(public_key_pem)
     sistema_reserva.execute()
 
+def run_pagamento_out():
+    sistema_pagamento = pagamento()
+    sistema_pagamento.execute()
+
+def run_marketing():
+    sistema_marketing = ms_marketing()
+    sistema_marketing.execute()
 
 if __name__ == "__main__":
     # Criar e iniciar o processo para o sistema de pagamento
@@ -60,16 +67,26 @@ if __name__ == "__main__":
     processo_bilhete.start()
     
     # Criar e iniciar o processo para o sistema de itinerarios
-    processo_bilhete = multiprocessing.Process(target=run_itinerarios, args=())
-    processo_bilhete.start()
+    processo_itinerarios = multiprocessing.Process(target=run_itinerarios, args=())
+    processo_itinerarios.start()
+
+    processo_pagamento2 = multiprocessing.Process(target=run_pagamento_out, args=())
+    processo_pagamento2.start()
 
     # Criar e iniciar o processo para o sistema de reserva
     processo_reserva = threading.Thread(target=run_reserva, args=())
     processo_reserva.start()
 
+    processo_marketing = threading.Thread(target=run_marketing, args=())
+    processo_marketing.start()
+
+    print("Sistemas iniciados com sucesso!")
+
     # Aguardar a conclusão do processo de pagamento
-    processo_pagamento.join()
-    processo_bilhete.join()
     processo_reserva.join()
+    processo_bilhete.join()
+    processo_pagamento.join()
+    processo_pagamento2.join()
+    processo_itinerarios.join()
 
     print("Execução concluída!")

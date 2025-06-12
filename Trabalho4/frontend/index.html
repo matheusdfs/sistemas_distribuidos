@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <title>Diniz Viagens</title>
   <style>
     h1 {
       text-align: center;
@@ -60,5 +61,26 @@
   <pre id="resultado"></pre>
 
   <script type="module" src="dist/script.js"></script>
+</body>
+<body>
+  <h1>Mensagens do servidor:</h1>
+  <div id="mensagens"></div>
+
+  <script type="module">
+    const mensagens = document.getElementById("mensagens");
+
+    const eventSource = new EventSource("http://localhost:8000/sse");
+
+    eventSource.onmessage = (event) => {
+      const msg = document.createElement("p");
+      msg.textContent = event.data;
+      mensagens?.appendChild(msg);
+    };
+
+    eventSource.onerror = (error) => {
+      console.error("Erro SSE:", error);
+      eventSource.close();
+    };
+  </script>
 </body>
 </html>

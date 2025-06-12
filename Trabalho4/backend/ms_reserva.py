@@ -5,19 +5,20 @@ import uvicorn
 import requests
 import threading
 
-
 from fastapi import FastAPI
-from sse_starlette.sse import EventSourceResponse
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+# from sse_starlette.sse import EventSourceResponse
 from cryptography.hazmat.primitives import serialization
 
-reservas = []
 subscribers = []
 
 class ms_reserva:
     def __init__(self, public_key_pem):
         # Initialize variables
         self.public_key = serialization.load_pem_public_key(public_key_pem)
+
+        self.reservas = []
 
         # Set connection with rabbitmq server
         self.connection = pika.BlockingConnection(
@@ -52,6 +53,16 @@ class ms_reserva:
         @app.get("/cancelar_reserva")
         def cancelar_reserva(codigo_reserva : str):
             return self.cancelar_reserva(codigo_reserva)
+        
+        async def event_generator():
+            await asyncio.sleep(10) 
+            while True:
+                yield f"data: Use o código de itinerário PROMO-RIO para conseguir 60% de desconto na viagem SP/RJ\n\n\n\n"
+                await asyncio.sleep(60)
+
+        @app.get("/sse")
+        async def sse_endpoint():
+            return StreamingResponse(event_generator(), media_type="text/event-stream")
 
         # Run in thread so the code is not blocked
         threading.Thread(target=uvicorn.run, args=(app,), kwargs={
@@ -81,26 +92,26 @@ class ms_reserva:
             # Adiciona a reserva à lista de reservas
             self.channel.basic_publish(exchange='', routing_key='reserva-criada', body=str(body))
 
-            reservas.append({"codigo":f"diniz_{codigo_itinerario}", "status": "reservado"})
+            self.reservas.append({"codigo":f"diniz_{codigo_itinerario}", "status": "reservado"})
         else:
             return {"error" : "CODE_NOT_FOUND"}
         
         return {
-            "link_pagamento": self.criar_pagamento()["link_pagamento"],
+            "link_pagamento": self.criar_pagamento(codigo_itinerario),
             "codigo_reserva": f"diniz_{codigo_itinerario}"
         }
     
     def cancelar_reserva(self, codigo_reserva):
-        resultado = [item for item in reservas if item["codigo"] == codigo_reserva]
+        resultado = [item for item in self.reservas if item["codigo"] == codigo_reserva]
         
         if not resultado:
             return {"error": "RESERVA_NOT_FOUND"}
 
-        reservas.remove(resultado[0])
+        self.reservas.remove(resultado[0])
         return {"message": "RESERVA_CANCELADA"}
 
-    def criar_pagamento(self):
-        response = requests.get("http://localhost:8002/criar_pagamento")
+    def criar_pagamento(self, codigo_reserva):
+        response = requests.get("http://localhost:8002/criar_pagamento", params={"codigo_reserva": codigo_reserva})
         if response.status_code == 200:
             return response.json()
         else:
@@ -133,16 +144,16 @@ class ms_reserva:
             #    hashes.SHA256()
             #)
 
-            data = ast.literal_eval(data["body"].decode('utf-8'))
+            data = data["body"]
 
-            resultado = [item for item in reservas if item["codigo"] == f"{data['user']}_{data['codigo']}"]
+            resultado = [item for item in self.reservas if item["codigo"] == f"{data['user']}_{data['codigo']}"]
             
-            reservas.remove(resultado[0])
+            self.reservas.remove(resultado[0])
 
             temp = data["user"]
             temp_2 = data["codigo"]
 
-            reservas.append({"codigo":f"{temp}_{temp_2}", "status": "aprovado"})
+            self.reservas.append({"codigo":f"{temp}_{temp_2}", "status": "aprovado"})
 
 
         def callback_gerado(ch, method, properties, body):
@@ -158,16 +169,17 @@ class ms_reserva:
             #    hashes.SHA256()
             #)
 
-            data = ast.literal_eval(data["body"].decode('utf-8'))
+            #data = ast.literal_eval(data["body"].decode('utf-8'))
+            data = data["body"]
 
-            resultado = [item for item in reservas if item["codigo"] == f"{data['user']}_{data['codigo']}"]
+            resultado = [item for item in self.reservas if item["codigo"] == f"{data['user']}_{data['codigo']}"]
             
-            reservas.remove(resultado[0])
+            self.reservas.remove(resultado[0])
 
             temp = data["user"]
             temp_2 = data["codigo"]
 
-            reservas.append({"codigo":f"{temp}_{temp_2}", "status": "bilhete_gerado"})
+            self.reservas.append({"codigo":f"{temp}_{temp_2}", "status": "bilhete_gerado"})
             # reservas.append({"codigo":f"{data["user"]}_{data["codigo"]}", "status": "bilhete_gerado"})
 
         def callback_recusado(ch, method, properties, body):
@@ -183,11 +195,11 @@ class ms_reserva:
             #    hashes.SHA256()
             #)
 
-            data = ast.literal_eval(data["body"].decode('utf-8'))
+            data = data["body"]
 
-            resultado = [item for item in reservas if item["codigo"] == f"{data['user']}_{data['codigo']}"]
+            resultado = [item for item in self.reservas if item["codigo"] == f"{data['user']}_{data['codigo']}"]
             
-            reservas.remove(resultado[0])
+            self.reservas.remove(resultado[0])
 
         channel.basic_consume(queue='bilhete-gerado', on_message_callback=callback_gerado, auto_ack=True)
         channel.basic_consume(queue='pagamento-recusado', on_message_callback=callback_recusado, auto_ack=True)

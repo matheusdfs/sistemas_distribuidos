@@ -36,7 +36,7 @@ class ms_bilhete:
             #)
 
             time.sleep(3)
-            print(f"[DEBUG] Bilhete gerado para compra")
+            
             self.channel.basic_publish(exchange='', routing_key='bilhete-gerado', body=body)
 
         self.channel.basic_consume(queue=self.queue_pagamento_aprovado, on_message_callback=callback, auto_ack=True)
